@@ -21,9 +21,11 @@ class WorkerThread(threading.Thread):
         self.latestTime = 0
         self.latestLeft = 0
         self.latestRight = 0
+        
     def run(self):
         raspModel.GPIO.setmode(raspModel.GPIO.BOARD)
         raspModel.GPIO.setwarnings(False)
+        self.setup()
         
         # As long as we weren't asked to stop, try to take new tasks from the
         # queue. The tasks are taken with a blocking 'get', so no CPU
@@ -35,16 +37,16 @@ class WorkerThread(threading.Thread):
             try:
                 self.currentTime = int(round(time.time() * 1000))
 ##                print "currentTime - latestTime :: " + str(self.currentTime - self.latestTime)
-                self.setup()
-                if (self.currentTime - self.latestTime) < 500:
-                    print "move : left >> " + str(self.latestLeft) +", right >> "+str(self.latestRight)
+                
+                if (self.currentTime - self.latestTime) < 300:
+                    self.setup()
                     self.move(self.latestLeft, self.latestRight)
                 else :
                     self.park(raspModel.strLeft + raspModel.strRight)
                     self.latestLeft = 0
                     self.latestRight = 0
                     
-                command = self.command_q.get(True, 0.0001)
+                command = self.command_q.get(True, 0.001)
                                 
                 self.latestLeft = command[raspModel.strLeft]
                 self.latestRight = command[raspModel.strRight]
